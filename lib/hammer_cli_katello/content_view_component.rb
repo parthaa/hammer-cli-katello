@@ -7,6 +7,10 @@ module HammerCLIKatello
     class ListCommand < HammerCLIKatello::ListCommand
       include OrganizationOptions
 
+      option "--composite-content-view",
+             "COMPOSITE_CONTENT_VIEW_NAME", _("Name of the composite content view"),
+             :attribute_name => :option_composite_content_view_name
+
       output do
         field :id, _("Id")
         field :content_view_name, _("Name")
@@ -37,6 +41,8 @@ module HammerCLIKatello
     end
 
     class AddComponents < HammerCLIKatello::SingleResourceCommand
+      include OrganizationOptions
+
       resource :content_view_components, :add_components
       command_name "add"
 
@@ -50,6 +56,10 @@ module HammerCLIKatello
       option "--content-view-version-id", "CONTENT_VIEW_VERSION_ID",
              _("Content View Version identifier of the component"),
              :attribute_name => :option_content_view_version_id
+
+      option "--composite-content-view",
+             "COMPOSITE_CONTENT_VIEW_NAME", _("Name of the composite content view"),
+             :attribute_name => :option_composite_content_view_name
 
       def request_params
         super.tap do |opts|
@@ -69,11 +79,15 @@ module HammerCLIKatello
       failure_message _("Could not add the component")
 
       build_options do |o|
+        o.expand.except(:components)
         o.without(:components)
+        o.expand.except(:content_view_versions)
+        o.without(:content_view_versions)
       end
     end
 
     class RemoveComponents < HammerCLIKatello::SingleResourceCommand
+      include OrganizationOptions
       action :remove_components
       command_name "remove"
 
@@ -84,6 +98,7 @@ module HammerCLIKatello
     end
 
     class UpdateCommand < HammerCLIKatello::SingleResourceCommand
+      include OrganizationOptions
       action :update
       command_name "update"
 
