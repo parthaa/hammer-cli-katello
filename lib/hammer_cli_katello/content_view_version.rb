@@ -296,6 +296,21 @@ module HammerCLIKatello
       build_options
     end
 
+    class ExportFutureCommand < HammerCLIKatello::SingleResourceCommand
+      include HammerCLIForemanTasks::Async
+      desc _('Export a content view version.  Relevant only for Pulp 3 repositories')
+
+      action :export
+      command_name "export-future"
+
+      success_message _("Content view versio is being exported in task %{id}.")
+      failure_message _("Could not export the content view version")
+
+      build_options do |o|
+        o.expand(:all).including(:content_views, :organizations)
+      end
+    end
+
     class ExportDefaultCommand < HammerCLIForeman::Command
       include HammerCLIKatello::LocalHelper
       include HammerCLIKatello::ApipieHelper
@@ -334,7 +349,7 @@ module HammerCLIKatello
       include LifecycleEnvironmentNameMapping
       desc _('Export a content view (legacy method)')
 
-      action :export
+      action :export_legacy
       command_name "export-legacy"
 
       success_message _("Content view is being exported in task %{id}.")
