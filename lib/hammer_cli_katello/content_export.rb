@@ -5,7 +5,7 @@ module HammerCLIKatello
 
     class VersionCommand < HammerCLIKatello::SingleResourceCommand
       include HammerCLIForemanTasks::Async
-      desc _('Export a content view version')
+      desc _('Performs a full export a content view version')
       action :version
 
       command_name "version"
@@ -46,7 +46,7 @@ module HammerCLIKatello
       def fetch_export_history
         task = load_task(@task_id)
         export_history_id = task["output"]["export_history_id"]
-        resource.call(:histories, :export_history_id => export_history_id)["results"].first if export_history_id
+        resource.call(:index, :id => export_history_id)["results"].first if export_history_id
       end
 
       def generate_metadata_json(export_history)
@@ -59,17 +59,15 @@ module HammerCLIKatello
           t = Tempfile.new("metadata.json")
           t.write(metadata_json)
           t.close
-          output.print_message _("Unable to access/write to #{export_history['path']}. Generated #{t.path} instead. You would need this file for importing.")
-          # rubocop:enable LineLength
+          output.print_message _("Unable to access/write to #{export_history['path']}."\
+                                 " Generated #{t.path} instead. You would need this file for importing.")
+
         end
       end
     end
 
-    class HistoriesCommand < HammerCLIKatello::ListCommand
+    class ListCommand < HammerCLIKatello::ListCommand
       desc "View content view export histories"
-      command_name "histories"
-      action :histories
-
       output do
         field :id, _('ID')
         field :destination_server, _('Destination Server')
