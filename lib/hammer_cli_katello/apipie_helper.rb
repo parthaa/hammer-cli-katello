@@ -12,6 +12,10 @@ module HammerCLIKatello
       call(:update, resource, options)['results']
     end
 
+    def create(resource, options = {})
+      call(:create, resource, options)
+    end
+
     def destroy(resource, options = {})
       call(:destroy, resource, options)
     end

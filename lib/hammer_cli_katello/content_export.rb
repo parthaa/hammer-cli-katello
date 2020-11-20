@@ -1,3 +1,5 @@
+require 'hammer_cli_katello/content_export_incremental'
+
 module HammerCLIKatello
   class ContentExport < HammerCLIKatello::Command
     desc "Prepare content for export to a disconnected Katello"
@@ -5,6 +7,7 @@ module HammerCLIKatello
 
     class VersionCommand < HammerCLIKatello::SingleResourceCommand
       include HammerCLIForemanTasks::Async
+      include ContentExportHelper
       desc _('Performs a full export a content view version')
       action :version
 
@@ -26,7 +29,7 @@ module HammerCLIKatello
         if option_async? || response != HammerCLI::EX_OK
           response
         else
-          export_history = fetch_export_history
+          export_history = fetch_export_history(@task)
           if export_history
             generate_metadata_json(export_history)
             HammerCLI::EX_OK
@@ -35,41 +38,6 @@ module HammerCLIKatello
             output.print_error _("Could not fetch the export history for id = '#{history_id}'")
             HammerCLI::EX_CANTCREAT
           end
-        end
-      end
-
-      def send_request
-        task = super
-        @task_id = task['id']
-        task
-      end
-
-      def request_params
-        super.tap do |opts|
-          opts["id"] = resolver.content_view_version_id(options)
-        end
-      end
-
-      private
-
-      def fetch_export_history
-        task = load_task(@task_id)
-        export_history_id = task["output"]["export_history_id"]
-        resource.call(:index, :id => export_history_id)["results"].first if export_history_id
-      end
-
-      def generate_metadata_json(export_history)
-        metadata_json = export_history["metadata"].to_json
-        begin
-          metadata_path = "#{export_history['path']}/metadata.json"
-          File.write(metadata_path, metadata_json)
-          output.print_message _("Generated #{metadata_path}")
-        rescue SystemCallError
-          filename = "metadata-#{export_history['id']}.json"
-          File.write(filename, metadata_json)
-          output.print_message _("Unable to access/write to '#{export_history['path']}'. "\
-                                 "Generated '#{Dir.pwd}/#{filename}' instead. "\
-                                 "You would need this file for importing.")
         end
       end
     end
@@ -89,6 +57,38 @@ module HammerCLIKatello
       build_options
     end
 
+    class LibraryCommand < HammerCLIForeman::Command
+      include HammerCLIForemanTasks::Async
+      include ContentExportHelper
+      desc _('Export the library')
+
+      command_name "library"
+
+      success_message _("Library exported.")
+      failure_message _("Could not export the library")
+
+      option "--organization-id", "ORGANIZATION_ID", _("Organization numeric identifier")
+
+      option "--destination-server", "DESTINATION_SERVER_NAME", _("Name of the destination-server")
+
+      validate_options do
+        option(:option_organization_id).required
+      end
+
+      build_options
+
+      def execute
+        destination_server = options['option_destination_server']
+        organization_id = option_organization_id
+        orchestrate_library_export(destination_server: destination_server,
+                                   organization_id: organization_id)
+      end
+    end
+
     autoload_subcommands
+
+    subcommand HammerCLIKatello::ContentExportIncremental.command_name,
+               HammerCLIKatello::ContentExportIncremental.desc,
+               HammerCLIKatello::ContentExportIncremental
   end
 end
