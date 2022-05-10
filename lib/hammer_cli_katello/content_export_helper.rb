@@ -1,5 +1,4 @@
 require 'hammer_cli_katello/repository'
-
 # rubocop:disable ModuleLength
 module HammerCLIKatello
   module ContentExportHelper
@@ -17,7 +16,10 @@ module HammerCLIKatello
         response
       else
         export_history = fetch_export_history_from_task(reload_task(@task))
-        if export_history
+        if option_format && option_format == 'syncable'
+          make_listing_files(export_history)
+          HammerCLI::EX_OK
+        elsif export_history
           generate_metadata_json(export_history)
           HammerCLI::EX_OK
         else
@@ -52,6 +54,10 @@ module HammerCLIKatello
       end
       export_history_id = task.dig('output', 'export_history_id')
       fetch_export_history(export_history_id)
+    end
+
+    def make_listing_files(export_history)
+      binding.pry
     end
 
     def generate_metadata_json(export_history)
