@@ -57,7 +57,30 @@ module HammerCLIKatello
     end
 
     def make_listing_files(export_history)
-      binding.pry
+      unless export_history["metadata"]["format"] == "syncable"
+        raise _("Cannot generate listing files for this export since is not syncable. It was not generated with --format=syncable.")
+      end
+      path = export_history["path"]
+      raise _("Export History does not have the path specified. The task may have errored out.") unless path
+      begin
+        # export history path may look like
+        # "/var/lib/pulp/exports/2022-05-17T21-11-27-00-00/Default_Organization/Library/content/dist/rhel/server/7/7Server/x86_64/ansible/2.9/os"
+        # Generate listing files for all sub directories of /var/lib/pulp/exports/2022-05-17T21-11-27-00-00/Default_Organization/Library/
+        organization = export_history["metadata"]["organization"]
+        path_index = path.index("#{organization}/Library")
+        raise _("Unable to locate the base directory of the export") unless path_index > 0
+        base_path = path[0...path_index]
+        # base path => /var/lib/pulp/exports/2022-05-17T21-11-27-00-00/
+        repodata_path = Dir.glob("#{base_path}/#{organization}/**/repodata/").first
+        raise _("Unable to locate the repodata directory of the export") unless repodata_path
+        sub_paths = repodata_path[base_path.length...]
+
+
+
+
+      rescue SystemCallError
+      end
+
     end
 
     def generate_metadata_json(export_history)
