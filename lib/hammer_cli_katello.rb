@@ -95,6 +95,10 @@ module HammerCLIKatello
                                          'HammerCLIKatello::ContentView',
                                          'hammer_cli_katello/content_view'
                                         )
+  HammerCLI::MainCommand.lazy_subcommand("content-view-environment", _("List content view environments"),
+                                         'HammerCLIKatello::ContentViewEnvironment',
+                                         'hammer_cli_katello/content_view_environment'
+                                        )
 
   # Capsule is just an alias to smart proxy
   HammerCLI::MainCommand.lazy_subcommand("capsule", _("Manipulate capsule"),
